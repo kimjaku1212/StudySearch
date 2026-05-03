@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>StudySearch Pro</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #ffd6e7;
+      margin: 0;
+      padding: 0;
+    }
+
+    .app {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      margin: 10px 0 20px;
+      color: #333;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 12px;
+      border: none;
+      background: #fff5e6;
+      outline: none;
+      margin-bottom: 12px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 12px;
+      border: none;
+      border-radius: 10px;
+      background: white;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      font-size: 14px;
+    }
+
+    button.active {
+      background: #b6f7b0;
+    }
+
+    .result {
+      background: white;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 12px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+
+    .highlight {
+      background: #b6f7b0;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    .empty {
+      text-align: center;
+      margin-top: 20px;
+      color: #555;
+    }
+
+    .bookmark-btn {
+      margin-top: 8px;
+      font-size: 12px;
+      background: #f1f1f1;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <div class="header">📚 StudySearch Pro</div>
+
+  <input type="text" id="searchBox" placeholder="Search notes..." onkeyup="searchText()">
+
+  <div class="controls">
+    <button onclick="toggleExamMode()" id="examBtn">🧠 Exam Mode OFF</button>
+    <button onclick="showBookmarks()">⭐ Bookmarks</button>
+    <button onclick="clearSearch()">🔄 Reset</button>
+  </div>
+
+  <div id="results" class="empty">Start searching...</div>
+
+</div>
+
+<script>
+const DATA = {
+  physics: {
+  "Electric Charges and Fields": [
+    "Charge is quantized: Q = ne.",
+    "Coulomb’s law: F = k q1 q2 / r^2.",
+    "Electric field is force per unit charge.",
+    "Electric dipole moment p = q × 2a.",
+    "Gauss law: total flux = q_enclosed / ε0."
+  ],
+
+  "Electrostatic Potential and Capacitance": [
+    "Electric potential is work done per unit charge.",
+    "Capacitance C = Q / V.",
+    "Energy stored in capacitor U = 1/2 CV^2.",
+    "Dielectric increases capacitance by factor K."
+  ],
+
+  "Current Electricity": [
+    "Ohm’s law: V = IR.",
+    "Current I = neAvd.",
+    "Resistance increases with temperature.",
+    "Kirchhoff’s laws conserve charge and energy."
+  ],
+
+  "Moving Charges and Magnetism": [
+    "Lorentz force: F = q(v × B).",
+    "Biot-Savart law gives magnetic field due to current.",
+    "Ampere’s law relates magnetic field and current.",
+    "Force between parallel wires depends on current and distance.",
+    "Torque on current loop τ = m × B."
+  ],
+
+  "Magnetism and Matter": [
+    "Magnetic flux through closed surface is zero.",
+    "Materials are diamagnetic, paramagnetic, or ferromagnetic.",
+    "Earth behaves like a giant magnet."
+  ],
+
+  "Electromagnetic Induction": [
+    "Faraday’s law: induced emf = -dΦ/dt.",
+    "Lenz law opposes change in flux.",
+    "Motional emf: E = Blv.",
+    "Self inductance opposes change in current."
+  ],
+
+  "Alternating Current": [
+    "RMS value of AC current is I0/√2.",
+    "Impedance Z = √(R² + (XL - XC)²).",
+    "Resonance occurs when XL = XC.",
+    "Power factor is cos φ."
+  ],
+
+  "Ray Optics": [
+    "Reflection and refraction follow geometric laws.",
+    "Lens formula: 1/f = 1/v + 1/u.",
+    "Total internal reflection occurs when i > critical angle.",
+    "Optical instruments magnify images."
+  ],
+
+  "Wave Optics": [
+    "Light behaves as wave showing interference.",
+    "YDSE fringe width β = λD/d.",
+    "Coherent sources have constant phase difference."
+  ],
+
+  "Dual Nature of Radiation": [
+    "Photoelectric effect shows particle nature of light.",
+    "Einstein equation: Kmax = hν - φ.",
+    "De Broglie wavelength λ = h/p."
+  ],
+
+  "Atoms and Nuclei": [
+    "Bohr model explains quantized orbits.",
+    "Energy levels: En = -13.6 Z²/n² eV.",
+    "Nuclear binding energy holds nucleus together."
+  ],
+
+  "Semiconductors": [
+    "Semiconductors have band gap between VB and CB.",
+    "PN junction allows current flow in one direction.",
+    "Diodes act as rectifiers."
+  ]
+},
+
+  chemistry: {
+  "Solutions": [
+    "Molarity = moles of solute / volume of solution.",
+    "Raoult’s law: vapor pressure is proportional to mole fraction.",
+    "Boiling point elevation: ΔTb = i Kb m.",
+    "Osmotic pressure: π = iCRT.",
+    "Van’t Hoff factor shows effect of solute particles."
+  ],
+
+  "Electrochemistry": [
+    "Nernst equation relates cell potential to concentration.",
+    "ΔG = -nFE shows relation between free energy and EMF.",
+    "Standard Hydrogen Electrode has zero potential.",
+    "Galvanic cell produces electricity from chemical reactions.",
+    "Electrolytic cell uses electricity to drive reaction."
+  ],
+
+  "Chemical Kinetics": [
+    "Rate of reaction depends on concentration of reactants.",
+    "First order half-life = 0.693/k.",
+    "Arrhenius equation relates rate constant and temperature.",
+    "Activation energy is minimum energy required for reaction.",
+    "Order of reaction may differ from molecularity."
+  ],
+
+  "d and f Block Elements": [
+    "Transition metals show variable oxidation states.",
+    "Color in complexes is due to d-d electronic transitions.",
+    "Lanthanide contraction affects atomic size.",
+    "KMnO4 and K2Cr2O7 are strong oxidizing agents."
+  ],
+
+  "Coordination Compounds": [
+    "Ligands donate electron pairs to central metal ion.",
+    "Hybridization determines geometry of complex.",
+    "Isomerism includes structural and stereoisomerism.",
+    "CFT explains splitting of d-orbitals in ligands.",
+    "Magnetic moment μ = √n(n+2)."
+  ],
+
+  "Haloalkanes and Haloarenes": [
+    "SN1 involves carbocation intermediate.",
+    "SN2 occurs in one step with inversion.",
+    "Haloarenes are less reactive due to resonance.",
+    "Finkelstein reaction is halogen exchange reaction."
+  ],
+
+  "Alcohols, Phenols, Ethers": [
+    "Lucas test distinguishes alcohol types.",
+    "Williamson synthesis forms ethers.",
+    "Reimer-Tiemann reaction forms salicylaldehyde.",
+    "Phenols are more acidic than alcohols."
+  ],
+
+  "Aldehydes Ketones Carboxylic Acids": [
+    "Carbonyl group undergoes nucleophilic addition.",
+    "Tollens test gives silver mirror.",
+    "Aldol condensation forms β-hydroxy carbonyls.",
+    "Cannizzaro reaction occurs in non-enolizable aldehydes."
+  ],
+
+  "Amines": [
+    "Amines are basic due to lone pair on nitrogen.",
+    "Carbylamine test detects primary amines.",
+    "Hinsberg test distinguishes amine types.",
+    "Gabriel synthesis prepares primary amines."
+  ],
+
+  "Biomolecules": [
+    "Glucose exists in cyclic and open chain forms.",
+    "Peptide bond links amino acids in proteins.",
+    "DNA stores genetic information, RNA helps protein synthesis.",
+    "Starch, cellulose, glycogen are polysaccharides.",
+    "Alpha and beta glucose are anomers."
+  ]
+},
+
+  maths: {
+    "Calculus": [
+      "Derivative represents rate of change.",
+      "Integration is reverse of differentiation."
+    ]
+  }
+}
+
+let examMode = false;
+let bookmarks = JSON.parse(localStorage.getItem("bookmarks")) || [];
+
+/* ---------------- EXAM MODE ---------------- */
+function toggleExamMode() {
+  examMode = !examMode;
+  document.getElementById("examBtn").classList.toggle("active");
+  document.getElementById("examBtn").innerText =
+    examMode ? "🧠 Exam Mode ON" : "🧠 Exam Mode OFF";
+
+  searchText();
+}
+
+/* ---------------- BOOKMARK ---------------- */
+function saveBookmark(text) {
+  if (!bookmarks.includes(text)) {
+    bookmarks.push(text);
+    localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
+  }
+}
+
+/* ---------------- SHOW BOOKMARKS ---------------- */
+function showBookmarks() {
+  let resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = "";
+
+  if (bookmarks.length === 0) {
+    resultsDiv.innerHTML = "<div class='empty'>No bookmarks yet ⭐</div>";
+    return;
+  }
+
+  bookmarks.forEach(item => {
+    resultsDiv.innerHTML += `
+      <div class="result">⭐ ${item}</div>
+    `;
+  });
+}
+
+/* ---------------- RESET ---------------- */
+function clearSearch() {
+  document.getElementById("searchBox").value = "";
+  document.getElementById("results").innerHTML =
+    "<div class='empty'>Start searching...</div>";
+}
+
+/* ---------------- SEARCH ---------------- */
+function searchText() {
+  let query = document.getElementById("searchBox").value.toLowerCase();
+  let resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = "";
+
+  if (query === "") {
+    resultsDiv.innerHTML = "<div class='empty'>Start typing...</div>";
+    return;
+  }
+
+  let found = false;
+
+  for (let subject in DATA) {
+    for (let chapter in DATA[subject]) {
+
+      DATA[subject][chapter].forEach(line => {
+
+        // Simple exam mode filter (safe version)
+        if (examMode) {
+          if (!line.includes("=") &&
+              !line.includes("law") &&
+              !line.includes(":") &&
+              !line.includes("force") &&
+              !line.includes("pressure")) {
+            return;
+          }
+        }
+
+        if (line.toLowerCase().includes(query)) {
+          found = true;
+
+          let highlighted = line.replace(
+            new RegExp(query, "gi"),
+            match => `<span class="highlight">${match}</span>`
+          );
+
+          resultsDiv.innerHTML += `
+            <div class="result">
+              <b>${subject.toUpperCase()} → ${chapter}</b><br>
+              ${highlighted}
+              <br>
+              <button class="bookmark-btn" onclick="saveBookmark('${line}')">⭐ Save</button>
+            </div>
+          `;
+        }
+
+      });
+
+    }
+  }
+
+  if (!found) {
+    resultsDiv.innerHTML = "<div class='empty'>No results found 😕</div>";
+  }
+}
+</script>
+
+</body>
+</html>
